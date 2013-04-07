@@ -44,8 +44,8 @@ lock = threading.Lock()
 scraped = 0
 wanted = 10000000
 
-username        = r'zhouyoufu18'            #iampigdata@gmail.com, zhouyoufu18
-pwd                 = r'zyf0132'                   #tonyzhou110, zyf0132
+username        = r'ur_account'            #iampigdata@gmail.com, zhouyoufu18
+pwd                 = r'ur_password'                   #tonyzhou110, zyf0132
 myuid              =  '1248521225'           # 3180262902, 1248521225
 cookie_file        = 'cookies.dat'
 
