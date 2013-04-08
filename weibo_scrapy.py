@@ -2,11 +2,11 @@
 #coding=utf8
 
 try:
-    import os
     import sys
     import time
     import threading
     import Queue
+    import ConfigParser
     from weibo_login import login
 
 except ImportError:
@@ -29,57 +29,70 @@ which is:
         sys.exit(1)
 
 
-__prog__= "weibo_login"
+__prog__= "weibo_scrapy"
 __site__= "http://yoyzhou.github.com"
 __weibo__= "@pigdata"
 __version__="0.1 beta"
 
 
-#####global variables define#####
+#####global variables#####
 
 visited_uids = set()
 task_queue = Queue.Queue()
 lock = threading.Lock()
 
 scraped = 0
-wanted = 10000000
-
-username        = r'ur_account'          
-pwd                 = r'ur_password'     
-           
-myuid              =  '1248521225'
-cookie_file        = 'cookies.dat'
-
+config_file = 'scrapy.ini'
 
 class scrapy(object):
     
-    
-    
-    global username
-    global pwd
-    global cookie_file
-    
     global visited_uids
     global task_queue
-    global scraped
-    global wanted
     global lock
     
+    global scraped
+    global config_file
+    
     #//TODO add config file feature
-    def __init__(self, thread_number=10, start_uid=None, uids_file=None):
+    def __init__(self, config=None, thread_number=None, start_uid=None, uids_file=None):
         
-        self.task_worker = self.scrapy_do_task
-        self.thread_number = thread_number
-        self.start_uid = start_uid
-        self.uids_file = uids_file
+        _config = {}
+        if config:
+            _config = self.__load_configuration__(config)
+        else:
+            _config = self.__load_configuration__(config_file)
         
+        self.login_username = _config['login_username']
+        self.login_uid = _config['login_uid']
+        self.login_password = _config['login_password']
+        self.cookies_file = _config['cookies_file']
+        
+        #get scrapy settings
+        self.thread_number = _config['thread_number']
+        
+        self.start_uid = _config['start_uid']
+        self.uids_file = _config['uids_file']
+        self.wanted = _config[ 'wanted']
+        
+        #accepts arguments also, and arguments have higher priority
+        if thread_number:
+            self.thread_number = thread_number
+        if start_uid and uids_file:
+            raise Exception('You can only specify `start_uid` or `uids_file` in constructor')  
+          
+        if start_uid:
+            self.start_uid = start_uid
+            self.uids_file = None
+        if uids_file:
+            self.uids_file = uids_file
+            self.start_uid = None
         
     def scrapy(self):
-        login_status = login(username,pwd,cookie_file)
-    
         
+        login_status = login(self.login_username, self.login_password, self.cookies_file)
+    
         if login_status:
-            #saver(uid,output_file)
+            
             if self.start_uid:
                 task_queue.put(self.start_uid)
             
@@ -91,25 +104,43 @@ class scrapy(object):
             else: #start uid or uids file is needed
                 raise Exception('ERROR: Start uid or uids file is needed.') 
            
-           #spawn a pool of threads, and pass them queue instance 
+            #spawn a pool of threads, and pass them queue instance 
             for _ in range(self.thread_number):
-                
-               st = scrapy_threading(self.task_worker, wanted)
-               st.setDaemon(True)
-               st.start()
+                st = scrapy_threading(self.scrapy_do_task, self.wanted)
+                st.setDaemon(True)
+                st.start()
                 
             
             task_queue.join()
                 
 
     def scrapy_do_task(self, uid=None):
-         '''
+        '''
         User needs to implements this method to perform scrapy task, which based on weibo uid.
         @param uid: weibo uid
         @return: a list of uids gained from this task
         '''
-         return []
-             
+        #return []
+        pass
+    
+    def __load_configuration__(self, config_file):
+        config = ConfigParser.RawConfigParser(allow_no_value=True)
+        config.read(config_file)
+        settings = {}
+        #get login account user info
+        settings['login_username'] = config.get('login_account_info', 'login_username')
+        settings['login_uid'] = config.get('login_account_info', 'login_uid')
+        settings['login_password'] = config.get('login_account_info', 'login_password')
+        settings['cookies_file'] = config.get('login_account_info', 'cookies_file')
+        
+        #get scrapy settings
+        settings['thread_number'] = config.getint('scrapy_settings', 'thread_number')
+        settings['start_uid'] = config.get('scrapy_settings', 'start_uid')
+        settings['uids_file'] = config.get('scrapy_settings', 'uids_file')
+        settings['wanted'] = config.getint('scrapy_settings', 'wanted')
+        
+        return settings
+    
     def __load_uids__(self):
         '''
         Loads uids from file. File should be formatted as one uid on each line.
@@ -125,8 +156,6 @@ class scrapy(object):
 class scrapy_threading(threading.Thread):
     """Thread class to handle scrapy task"""
     
-    
-    
     def __init__(self, task, wanted):
         threading.Thread.__init__(self)
         self.do_task = task
@@ -141,7 +170,6 @@ class scrapy_threading(threading.Thread):
         while scraped < self.wanted:
             
             #crawl info based on each uid
-
             if task_queue:
               
                 uid = task_queue.get()
@@ -150,13 +178,11 @@ class scrapy_threading(threading.Thread):
                     task_queue.task_done()
                 
                 else:
-                    
                     try:
-                       
                         gains = self.do_task(uid)
                         
+                        #per debug
                         wow = '{0: <25}'.format('[' + time.asctime() + '] ') + ' uid_' + '{0: <12}'.format(uid)
-                        #logging.info(wow)
                         print wow
                         for uid in gains:
                             task_queue.put(uid)
@@ -167,6 +193,7 @@ class scrapy_threading(threading.Thread):
                         #counting scrapied number
                         with lock:
                             scraped += 1
+                            #per debug
                             print 'scraped: ' + str(scraped)
                             
                     except Exception, e:
@@ -176,6 +203,3 @@ class scrapy_threading(threading.Thread):
             else:
                 time.sleep(30)
             
-    
-    
-    

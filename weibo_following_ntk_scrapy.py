@@ -1,18 +1,10 @@
 #!/usr/bin/env python
 #coding=utf8
 try:
-    import os
     import sys
-    import urllib
     import urllib2
-    import cookielib
-    import base64
     import re
-    import hashlib
     import json
-    import time
-    import rsa
-    import binascii
     from BeautifulSoup import BeautifulSoup
     from BeautifulSoup import Tag
     from weibo_scrapy import scrapy
@@ -40,14 +32,15 @@ which is:
 class weibo_following_ntk_scrapy(scrapy):
     
     def __init__(self, **kwds):
-         super(weibo_following_ntk_scrapy, self).__init__(**kwds)
-         self.myuid  =  '1248521225'  
-         self.urlprefix = 'http://weibo.com'
-         self.magic_spliter = '*_*'
+        super(weibo_following_ntk_scrapy, self).__init__(**kwds)
+        self.urlprefix = 'http://weibo.com'
+        self.magic_spliter = '*_*'
          
     def scrapy_do_task(self, uid):
-        
-        if uid == self.myuid:
+        '''
+        Note the differences between login uid, aka my following, and other uids.
+        '''
+        if uid == self.login_uid: #when do task uid equals login uid
             return self.extract_my_followings(uid)
         else:
             return self.extract_his_followings(uid)
@@ -81,19 +74,12 @@ class weibo_following_ntk_scrapy(scrapy):
         patt_my = '<script>STK && STK.pageletM && STK.pageletM.view\((.*)\)</script>'
         patt = re.compile(patt_my, re.MULTILINE)
         
-       
-#        #follows_info = []
         max_followingpage_number = 0
         followingpage_href = ''
-#        
-#        global visited_uids
-#        global visit_queue
-        
+
         followings_mine = []
         
         my_followings_file = open('myfollows.txt', 'a+')
-        #max_followingpage_number = 1
-        #print resp_content
         weibo_scripts = patt.findall(resp_content)
         
         for script in weibo_scripts: 
@@ -145,10 +131,11 @@ class weibo_following_ntk_scrapy(scrapy):
         my_followings_file.close()
         return max_followingpage_number, followingpage_href, new_followings
        
+    ################################################################
+  
     def extract_his_followings(self, uid):
         
-        his_followings = []
-        #his_followings_content = []        
+        his_followings = []       
         #scrape user info
         resp = urllib2.urlopen(self.urlprefix + '/%s/info' %uid)
         resp_content = resp.read()        
@@ -159,7 +146,7 @@ class weibo_following_ntk_scrapy(scrapy):
         resp_content = resp.read()            
         following_uids, max_followingpage_number = self.parse_friends_follows(resp_content, uid)          
         his_followings.extend(following_uids)
-        #his_followings_content.append(following_details)
+
             
         page = 2
         while(page <= max_followingpage_number):
@@ -168,15 +155,13 @@ class weibo_following_ntk_scrapy(scrapy):
             resp_content = resp.read()  
             following_uids, max_followingpage_number = self.parse_friends_follows(resp_content, uid)          
             his_followings.extend(following_uids)
-            #his_followings_content.append(following_details)
+
             page +=1
           
         return his_followings
         
-    ################################################################
     
     
-  
     def parse_friend_infos(self, resp_content, uid):
         
         patt_my = '<script>STK && STK.pageletM && STK.pageletM.view\((.*)\)</script>'
@@ -255,17 +240,11 @@ class weibo_following_ntk_scrapy(scrapy):
         patt_my = '<script>STK && STK.pageletM && STK.pageletM.view\((.*)\)</script>'
         patt = re.compile(patt_my, re.MULTILINE)
        
-        
         max_followingpage_number = 0
-        #global followingpage_href
-        
         followings_his=[]
-    
         user_info = {}
     
-        
         his_follows_file = open('%s_his_followings.txt' %(uid), 'a+') 
-        
         weibo_scripts = patt.findall(resp_content)
         
         
@@ -284,8 +263,6 @@ class weibo_following_ntk_scrapy(scrapy):
                 if followpages: #people who follows nobody or have only one page of followings do not have followpages div
                     for followpage in [page for page in followpages.contents if isinstance(page, Tag)]:
                         if followpage.get('class') == 'page S_bg1':
-                            followingpage_href = followpage.get('href')
-                        
                             if followpage.string:
                                 pagenumber = int(followpage.string.strip())
                                 if pagenumber > max_followingpage_number:
@@ -317,11 +294,9 @@ class weibo_following_ntk_scrapy(scrapy):
                                        
                     followings_his.append(user_info)
                         
-                        #print user_info
         
         new_followings = [user['uid'] for user in followings_his]
 
-        
         #write user's followings to file
         followings_his_content = '\n'.join([self.magic_spliter.join([str(k) + ':' + str(v) for k, v in user_info.items()]) for user_info in followings_his])
         
@@ -348,5 +323,5 @@ class weibo_following_ntk_scrapy(scrapy):
         return content.strip()
     
 if __name__ == '__main__':
-    s = weibo_following_ntk_scrapy(start_uid = '2332911232')
+    s = weibo_following_ntk_scrapy(uids_file = 'uids_all.txt', config = 'my.ini')
     s.scrapy()
