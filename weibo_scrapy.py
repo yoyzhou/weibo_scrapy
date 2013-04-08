@@ -116,9 +116,9 @@ class scrapy(object):
 
     def scrapy_do_task(self, uid=None):
         '''
-        User needs to implements this method to perform scrapy task, which based on weibo uid.
+        User needs to overwrite this method to perform uid-based scrapy task.
         @param uid: weibo uid
-        @return: a list of uids gained from this task
+        @return: a list of uids gained from this task, optional
         '''
         #return []
         pass
