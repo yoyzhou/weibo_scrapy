@@ -49,3 +49,5 @@ WEIBO\_SCRAPY is a **Multi-Threading** SINA WEIBO data extraction Framework in P
 		s = my_scrapy(uids_file = 'uids_all.txt', config = 'my.ini')
 		s.scrapy()
 
+###相关阅读(Readings)
+[基于UID的WEIBO信息抓取框架WEIBO_SCRAPY](http://yoyzhou.github.io/blog/2013/04/08/weibo-scrapy-framework-with-multi-threading/)
