@@ -1,7 +1,7 @@
 WEIBO_SCRAPY
 ============
 
-WEIBO\_SCRAPY是一个PYTHON实现的，使用多线程抓取WEIBO信息的框架。WEIBO\_SCRAPY框架给用户提供WEIBO的模拟登录和多线程抓取微博信息的接口，让用户只需关心抓取的业务逻辑，进而将用户从处理棘手的WEIBO模拟登录和多线程中解脱出来。
+WEIBO\_SCRAPY是一个PYTHON实现的，使用多线程抓取WEIBO信息的框架。WEIBO\_SCRAPY框架给用户提供WEIBO的模拟登录和多线程抓取微博信息的接口，让用户只需关心抓取的业务逻辑，而不用处理棘手的WEIBO模拟登录和多线程编程。
 
 WEIBO\_SCRAPY is a **Multi-Threading** SINA WEIBO data extraction Framework in Python. WEIBO\_SCRAPY provides WEIBO login simulator and interface for WEIBO data extraction with multi-threading, it saves users a lot of time by getting users out of writing WEIBO login simulator from scratch and multi-threading programming, users now can focus on their own **extraction** logic.
 
