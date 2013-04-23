@@ -16,6 +16,8 @@ local.properties
 .settings/
 .loadpath
 *~
+*txt$
+*TXT$
 
 # External tool builders
 .externalToolBuilders/
