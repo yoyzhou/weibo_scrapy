@@ -19,7 +19,8 @@ local.properties
 *txt$
 *TXT$
 following*
-
+*csv
+*txt
 # External tool builders
 .externalToolBuilders/
 
