@@ -152,12 +152,18 @@ def do_login(username,pwd,cookie_file):
     )
     result = urllib2.urlopen(req_login)
     text = result.read()
-    p = re.compile('location\.replace\(\"(.*?)\"\)')
+    p = re.compile('location\.replace\(\"(.*?)\"\)') #double quote regex
+    ps = re.compile('location\.replace\(\'(.*?)\'\)') #single quote regex
     
     try:
         #Search login redirection URL
-        login_url = p.search(text).group(1)
-        
+        try:
+            #first try with double quote regex
+            login_url = p.search(text).group(1)
+        except:
+            #try with double quote regex
+            login_url = ps.search(text).group(1)
+            
         data = urllib2.urlopen(login_url).read()
         
         #Verify login feedback, check whether result is TRUE
